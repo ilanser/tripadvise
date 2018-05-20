@@ -10,19 +10,22 @@ router.get('/', function (req, res, next) {
 
 /*Handle Login */
 router.post('/login', function (req, res) {
-    //TODO check if user in DB and connect him + return token
-    var query = ("SELECT * FROM USERS WHERE USERNAME = " + req.params['username']);
-    DBUtils.execQuery(query)
+    //check if user in DB and connect him + return token
+    console.log(req.body);
+    var query = ("SELECT * FROM Users WHERE username = '" + req.body['username']+"'");
+    DButilsAzure.execQuery(query)
         .then(function (results) {
+            console.log(results.body);
             if (results.length > 0)
                 if (results[0]['password'] === req.params['password']) {
                     const user = {
-                        username: req.params['username'],
-                        password: req.params['password']
+                        username: req.body['username'],
+                        password: req.body['password']
                     };
                     jwt.sign({user}, 'secretkey', (err, token) => {
                         res.json({
-                            token
+                            token,
+                            message : "Hello! "+results[0]['FirstName']
                         });
                     });
                 }
@@ -37,6 +40,7 @@ router.post('/login', function (req, res) {
 /*Handle Register */
 router.post('/register', function (req, res) {
     //TODO read the body and register the user and return response
+
 });
 /*Handle favorites manipulation  */
 router.route('/favorites')
