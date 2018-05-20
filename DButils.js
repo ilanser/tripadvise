@@ -9,10 +9,10 @@ var poolConfig = {
 };
 
 var connectionConfig = {
-    userName: 'my-ship-server',
-    password: 'abCD1234',
-    server: 'my-shop-server.database.windows.net',
-    options: { encrypt: true, database: 'SHOP_SERVER' }
+    userName: 'ilanser',
+    password: '`1Passcode',
+    server: 'ilanser.database.windows.net',
+    options: { encrypt: true, database: 'cityranker' }
 };
 
 //create the pool
