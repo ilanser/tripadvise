@@ -11,7 +11,6 @@ var usersRouter = require('./routes/users');
 var app = express();
 var cors = require('cors');
 app.use(cors());
-var DButilsAzure = require('./DButils');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
