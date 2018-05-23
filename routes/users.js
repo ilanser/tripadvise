@@ -40,6 +40,46 @@ router.post('/login', function (req, res) {
 /*Handle Register */
 router.post('/register', function (req, res) {
     //TODO read the body and register the user and return response
+    let user = {
+      username: "'"+req.body.username+"'",
+        password: "'"+req.body.password+"'",
+        secrequestion: "'"+req.body.secrequestion+"'",
+        secretanswer: "'"+req.body.secretanswer+"'",
+        firstname: "'"+req.body.firstname+"'",
+        lastname: "'"+req.body.lastname+"'",
+        email: "'"+req.body.email+"'",
+        country: "'"+req.body.country+"'",
+        city: "'"+req.body.city+"'"
+    };
+    // TODO maybe do input validation testing
+    let query = "INSERT INTO USERS VALUES ("+Object.values(user).join()+")";
+    console.log(query);
+    DButilsAzure.execQuery(query)
+        .then(function(results){
+            console.log("username added to the DB");
+            let interestlist = req.body.interests.split(',');
+            console.log(interestlist);
+            query ="INSERT INTO Interests VALUES ";
+            interestlist.forEach(function(entry){
+                query = query + "("+ user.username+ ",'" + entry+ "')," ;
+            })
+            query= query.substr(0,query.length-1);
+            console.log(query);
+            DButilsAzure.execQuery(query)
+                .then(function (results){
+                    console.log("added interests into DB")
+                    res.json({
+                        status : "success add user and interest to DB"
+                    });
+                })
+                .catch(function(err){
+                    res.status(403).send({error: err.toString()});
+                });
+        })
+        .catch(function(err){
+           if(err)
+               res.status(403).send({error: err.toString()});
+        });
 
 });
 /*Handle favorites manipulation  */
