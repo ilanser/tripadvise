@@ -12,20 +12,37 @@ router.get('/', function (req, res, next) {
 router.post('/login', function (req, res) {
     //check if user in DB and connect him + return token
     console.log(req.body);
-    var query = ("SELECT * FROM Users WHERE username = '" + req.body['username']+"'");
+    let user = {
+        username: "",
+        password: "",
+        firstname: "",
+        interests: "",
+        favorites: ""
+    };
+    let query = ("SELECT * FROM Users WHERE username = '" + req.body['username']+"'");
     DButilsAzure.execQuery(query)
         .then(function (results) {
             console.log(results.body);
             if (results.length > 0)
                 if (results[0]['password'] === req.params['password']) {
-                    const user = {
-                        username: req.body['username'],
-                        password: req.body['password']
-                    };
+                    user.username = req.body.username;
+                    user.password = req.body.password;
+                    query = "SELECT interest FROM Interests WHERE username = '"+req.body.username+"'";
+                    DButilsAzure.execQuery(query)
+                        .then(function(results){
+                            user.interests = results[0].join();
+                        })
+                    query = "SELECT PoiID FROM Favorites WHERE username = '"+user.username+"'";
+                    DButilsAzure.execQuery(query)
+                        .then(function(results){
+                            user.favorites = results[0].join();
+                        })
                     jwt.sign({user}, 'secretkey', (err, token) => {
                         res.json({
                             token,
-                            message : "Hello! "+results[0]['FirstName']
+                            firstname : user.firstname,
+                            interests: user.interests,
+                            favorites: user.favorites
                         });
                     });
                 }
@@ -86,13 +103,57 @@ router.post('/register', function (req, res) {
 router.route('/favorites')
     .get(function (req, res) {
         //TODO return the list of favorites from DB
+        let user = {};
+        jwt.verify(req.body.token,'secretkey',(err,result)=>
+        {
+            if(!err)
+            user.username = result.username;
+        });
+        let query = "SELECT poiid from favorites where username = '"+user.username+"'";
+        DButilsAzure.execQuery(query)
+            .then(function(results){
+                res.json({
+                    favorites : results[0].join()
+                });
+            })
     })
     .put(function (req, res) {
         //TODO Update the list of favorites for the user in DB
+        let user = {};
+        jwt.verify(req.body.token,'secretkey',(err,result)=>
+        {
+           if(!err){
+               user.username = result.username;
+               user.favorites = result.favorites;
+               let query = "UPDATE Favorites SET poiid = '"+user.favorites+"' " +
+                   "WHERE username = '"+user.username+"'";
+               DButilsAzure.execQuery(query)
+                   .then(function(results){
+                       res.status(200);
+                   })
+                   .catch(function (err) {
+                       res.status(403).send({error: err.toString()});
+                   })
+           }
+
+        });
+
     });
 
-router.post('/retrievepassword', function (req, res) {
+router.post('/retrievePassword', function (req, res) {
     //TODO retrieve password function will send user information from
-    // DB with question and answer
+    let query = "SELECT (secretquestion, secretanswer , password) FROM" +
+        "users where username = '"+req.body.username+"'";
+    DButilsAzure.execQuery(query)
+        .then(function (results) {
+            res.json({
+                secretquestion: results[0]['secretquestion'],
+                secretanswer: results[0]['secretanswer'],
+                password : results[0]['password']
+            });
+        })
+        .catch(function (err) {
+            res.status(403).send({error  : err.toString()});
+        })
 });
 module.exports = router;
