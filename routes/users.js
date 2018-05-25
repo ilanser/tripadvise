@@ -72,7 +72,6 @@ router.post('/login', function (req, res) {
 
 /*Handle Register */
 router.post('/register', function (req, res) {
-    //TODO read the body and register the user and return response
     let user = {
         username: "'" + req.body.username + "'",
         password: "'" + req.body.password + "'",
@@ -139,7 +138,7 @@ router.route('/favorites')
     .put(function (req, res) {
         //TODO Update the list of favorites for the user in DB
         let user = {};
-        jwt.verify(req.body.token, 'secretkey', (err, result) => {
+        jwt.verify(req.headers.token, 'secretkey', (err, result) => {
             console.log(result);
             if (!err) {
                 user.username = result.user.username;
@@ -170,7 +169,6 @@ router.route('/favorites')
     });
 
 router.post('/retrievePassword', function (req, res) {
-    //TODO retrieve password function will send user information from
     let query = "SELECT secretquestion, secretanswer, password FROM " +
         "users where username = '" + req.body.username + "'";
     DButilsAzure.execQuery(query)
