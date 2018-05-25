@@ -12,14 +12,9 @@ router.get('/', function (req, res, next) {
 router.post('/login', function (req, res) {
     //check if user in DB and connect him + return token
     console.log(req.body);
-    let user = {
-        username: "",
-        password: "",
-        firstname: "",
-        interests: "",
-        favorites: ""
-    };
-    let query = ("SELECT * FROM Users WHERE username = '" + req.body['username']+"'");
+    let user = {};
+    let other = {};
+    let query = ("SELECT * FROM Users WHERE username = '" + req.body['username'] + "'");
     DButilsAzure.execQuery(query)
         .then(function (results) {
             console.log(results.body);
@@ -27,24 +22,45 @@ router.post('/login', function (req, res) {
                 if (results[0]['password'] === req.params['password']) {
                     user.username = req.body.username;
                     user.password = req.body.password;
-                    query = "SELECT interest FROM Interests WHERE username = '"+req.body.username+"'";
+                    other.firstname = results[0]['FirstName'];
+                    query = "SELECT interest FROM Interests WHERE username = '" + req.body.username + "'";
                     DButilsAzure.execQuery(query)
-                        .then(function(results){
-                            user.interests = results[0].join();
+                        .then(function (results) {
+                            other.interests = "";
+                            results.forEach(function (value) {
+                                other.interests += (value.interest) + ",";
+                            });
+                            other.interests = other.interests.substr(0, other.interests.length - 1);
+                            console.log(user);
                         })
-                    query = "SELECT PoiID FROM Favorites WHERE username = '"+user.username+"'";
-                    DButilsAzure.execQuery(query)
-                        .then(function(results){
-                            user.favorites = results[0].join();
-                        })
-                    jwt.sign({user}, 'secretkey', (err, token) => {
-                        res.json({
-                            token,
-                            firstname : user.firstname,
-                            interests: user.interests,
-                            favorites: user.favorites
+                        .catch(function (err) {
+                            console.log("Can't retrieve interests from DB: " + err.toString());
                         });
-                    });
+                    query = "SELECT PoiID FROM Favorites WHERE username = '" + user.username + "'";
+                    DButilsAzure.execQuery(query)
+                        .then(function (results) {
+                            if (results.length > 0) {
+                                other.favorites = "";
+                                results.forEach(function (value) {
+                                    other.favorites += (value.poiid) + ",";
+                                });
+                                other.favorites = other.favorites.substr(0, other.favorites.length - 1);
+
+                            }
+
+                            jwt.sign({user}, 'secretkey', (err, token) => {
+                                res.json({
+                                    token,
+                                    firstname: other.firstname,
+                                    interests: other.interests,
+                                    favorites: other.favorites
+                                });
+                            });
+                        })
+                        .catch(function (err) {
+                            console.log("Could not find favorites: " + err.toString());
+                        })
+
                 }
         })
         .catch(function (err) {
@@ -58,44 +74,44 @@ router.post('/login', function (req, res) {
 router.post('/register', function (req, res) {
     //TODO read the body and register the user and return response
     let user = {
-      username: "'"+req.body.username+"'",
-        password: "'"+req.body.password+"'",
-        secrequestion: "'"+req.body.secrequestion+"'",
-        secretanswer: "'"+req.body.secretanswer+"'",
-        firstname: "'"+req.body.firstname+"'",
-        lastname: "'"+req.body.lastname+"'",
-        email: "'"+req.body.email+"'",
-        country: "'"+req.body.country+"'",
-        city: "'"+req.body.city+"'"
+        username: "'" + req.body.username + "'",
+        password: "'" + req.body.password + "'",
+        secrequestion: "'" + req.body.secrequestion + "'",
+        secretanswer: "'" + req.body.secretanswer + "'",
+        firstname: "'" + req.body.firstname + "'",
+        lastname: "'" + req.body.lastname + "'",
+        email: "'" + req.body.email + "'",
+        country: "'" + req.body.country + "'",
+        city: "'" + req.body.city + "'"
     };
     // TODO maybe do input validation testing
-    let query = "INSERT INTO USERS VALUES ("+Object.values(user).join()+")";
+    let query = "INSERT INTO USERS VALUES (" + Object.values(user).join() + ")";
     console.log(query);
     DButilsAzure.execQuery(query)
-        .then(function(results){
+        .then(function (results) {
             console.log("username added to the DB");
             let interestlist = req.body.interests.split(',');
             console.log(interestlist);
-            query ="INSERT INTO Interests VALUES ";
-            interestlist.forEach(function(entry){
-                query = query + "("+ user.username+ ",'" + entry+ "')," ;
+            query = "INSERT INTO Interests VALUES ";
+            interestlist.forEach(function (entry) {
+                query = query + "(" + user.username + ",'" + entry + "'),";
             })
-            query= query.substr(0,query.length-1);
+            query = query.substr(0, query.length - 1);
             console.log(query);
             DButilsAzure.execQuery(query)
-                .then(function (results){
+                .then(function (results) {
                     console.log("added interests into DB")
                     res.json({
-                        status : "success add user and interest to DB"
+                        status: "success add user and interest to DB"
                     });
                 })
-                .catch(function(err){
+                .catch(function (err) {
                     res.status(403).send({error: err.toString()});
                 });
         })
-        .catch(function(err){
-           if(err)
-               res.status(403).send({error: err.toString()});
+        .catch(function (err) {
+            if (err)
+                res.status(403).send({error: err.toString()});
         });
 
 });
@@ -104,37 +120,50 @@ router.route('/favorites')
     .get(function (req, res) {
         //TODO return the list of favorites from DB
         let user = {};
-        jwt.verify(req.body.token,'secretkey',(err,result)=>
-        {
-            if(!err)
-            user.username = result.username;
+        jwt.verify(req.headers.token, 'secretkey', (err, result) => {
+            if (!err) {
+                console.log(result);
+                user.username = result.user.username;
+                let query = "SELECT poiid from favorites where username = '" + user.username + "'";
+                DButilsAzure.execQuery(query)
+                    .then(function (results) {
+                        res.json({
+                            favorites: results[0]['poiid']
+                        });
+                    });
+            }
+            else
+                res.json({error: err.toString()});
         });
-        let query = "SELECT poiid from favorites where username = '"+user.username+"'";
-        DButilsAzure.execQuery(query)
-            .then(function(results){
-                res.json({
-                    favorites : results[0].join()
-                });
-            })
     })
     .put(function (req, res) {
         //TODO Update the list of favorites for the user in DB
         let user = {};
-        jwt.verify(req.body.token,'secretkey',(err,result)=>
-        {
-           if(!err){
-               user.username = result.username;
-               user.favorites = result.favorites;
-               let query = "UPDATE Favorites SET poiid = '"+user.favorites+"' " +
-                   "WHERE username = '"+user.username+"'";
-               DButilsAzure.execQuery(query)
-                   .then(function(results){
-                       res.status(200);
-                   })
-                   .catch(function (err) {
-                       res.status(403).send({error: err.toString()});
-                   })
-           }
+        jwt.verify(req.body.token, 'secretkey', (err, result) => {
+            console.log(result);
+            if (!err) {
+                user.username = result.user.username;
+                user.favorites = req.body.favorites;
+                let query = "IF EXISTS (SELECT * FROM Favorites WHERE username = '" + user.username + "') " +
+                    "BEGIN Update Favorites SET poiid = '" + user.favorites + "' " +
+                    "WHERE username = '" + user['username'] + "' END ELSE BEGIN INSERT INTO Favorites VALUES ('" + user['username'] +
+                    "', '" + user.favorites + "') END";
+                console.log(query)
+                DButilsAzure.execQuery(query)
+                    .then(function (results) {
+                        console.log(results + " " + results.length);
+
+                        res.status(200).send("Favorites updated");
+
+                    })
+                    .catch(function (err) {
+                        res.status(403).send({error: err.toString()});
+                    })
+            }
+            else
+                res.json({
+                    error: err.toString()
+                });
 
         });
 
@@ -142,18 +171,18 @@ router.route('/favorites')
 
 router.post('/retrievePassword', function (req, res) {
     //TODO retrieve password function will send user information from
-    let query = "SELECT (secretquestion, secretanswer , password) FROM" +
-        "users where username = '"+req.body.username+"'";
+    let query = "SELECT secretquestion, secretanswer, password FROM " +
+        "users where username = '" + req.body.username + "'";
     DButilsAzure.execQuery(query)
         .then(function (results) {
             res.json({
                 secretquestion: results[0]['secretquestion'],
                 secretanswer: results[0]['secretanswer'],
-                password : results[0]['password']
+                password: results[0]['password']
             });
         })
         .catch(function (err) {
-            res.status(403).send({error  : err.toString()});
+            res.status(403).send({error: err.toString()});
         })
 });
 module.exports = router;
