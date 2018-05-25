@@ -8,7 +8,7 @@ router.get('/', function(req, res, next) {
     res.send('respond with a resource');
 });
 
-router.get('poidetails/:id',function(req,res){
+router.get('/poidetails/:id',function(req,res){
    //TODO return all the information for the poi ID
     let ans = {};
     let askedID = req.params.id;
@@ -26,6 +26,9 @@ router.get('poidetails/:id',function(req,res){
                     Category : results[0]['Category']
                 };
                 res.status(200).send(ans);
+                query = "UPDATE Poi SET WatchCount = "+(ans.WatchCount+1) +"Where" +
+                    " PoiID = "+ans.PoiID ;
+                DButilsAzure.execQuery(query);
             }
         })
         .catch(function (err) {
@@ -34,7 +37,7 @@ router.get('poidetails/:id',function(req,res){
         });
 });
 
-router.get('poidetails',function(req,res){
+router.get('/poidetails',function(req,res){
  //TODO return all the poi from DB
     //        [PoiID]
     //       ,[Name]
@@ -67,9 +70,9 @@ router.get('poidetails',function(req,res){
         });
 });
 
-router.get('searchpoi',function(req,res){
+router.get('/searchpoi',function(req,res){
    //TODO search function ( req.query['name']
-    let poiname = req.query['name'];
+    let poiname = req.query['name'].replace('_'," ");
     let ans = {};
     let query = "SELECT * FROM Poi Where Name = '"+poiname+"'";
     DButilsAzure.execQuery(query)
@@ -85,7 +88,12 @@ router.get('searchpoi',function(req,res){
                     Category : results[0]['Category']
                 };
                 res.status(200).send(ans);
+                query = "UPDATE Poi SET WatchCount = "+(ans.WatchCount+1) +"Where" +
+                    " PoiID = "+ans.PoiID ;
+                DButilsAzure.execQuery(query);
             }
+            else
+                res.status(403).send("poi name was not found");
         })
         .catch(function (err) {
            if(err)
@@ -93,7 +101,7 @@ router.get('searchpoi',function(req,res){
         });
 });
 
-router.put('review', function(req,res){
+router.put('/review', function(req,res){
    //TODO add review for poi to DB
 
 });
