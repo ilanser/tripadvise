@@ -6,6 +6,7 @@ var jwt = require('jsonwebtoken');
 /* GET users listing. */
 router.get('/', function(req, res, next) {
     res.send('respond with a resource');
+    next();
 });
 
 router.get('/poidetails/:id',function(req,res){
@@ -47,7 +48,7 @@ router.get('/poidetails',function(req,res){
     //       ,[NumberOfRanks]
     //       ,[Category]
     let ans = [];
-    let query = "SELECT * FROM Poi"
+    let query = "SELECT * FROM Poi";
     DButilsAzure.execQuery(query)
         .then(function (results){
             for( let i=0 ; i<results.length ; i++){
@@ -57,7 +58,7 @@ router.get('/poidetails',function(req,res){
                     WatchCount : results[i]['WatchCount'],
                     PoiDesc : results[i]['PoiDesc'],
                     TotalRank : results[i]['TotalRank'],
-                    NumberOfRanks : results[i]['NumberOfRanks'],
+                    NumberOfRanks : results[i]['TotalRank'],
                     Category : results[i]['Category']
                 };
                 ans.push(poi);
@@ -103,6 +104,39 @@ router.get('/searchpoi',function(req,res){
 
 router.put('/review', function(req,res){
    //TODO add review for poi to DB
-
+    //        [ReviewID]
+    //       ,[PoiID]
+    //       ,[Username]
+    //       ,[Review]
+    //       ,[ReviewDate]
+    //       ,[ReviewRank]
+    let PoiReview = {};
+    jwt.verify(req.headers.token, 'secretkey' , (err,result)=>
+    {
+       PoiReview = {
+           poiid : "'"+req.body.poiid+"'",
+           username : "'"+result.user.username+"'",
+           review : "'"+req.body.review+"'",
+           date : "'"+req.body.date+"'",
+           rank : "'"+req.body.rank+"'"
+       };
+       let query = "INSERT INTO Reviews VALUES ("+ Object.values(PoiReview).join()+
+           ")";
+       DButilsAzure.execQuery(query)
+           .catch(function (err) {
+              if (err)
+                  res.status(403).send("error while adding review to DB: "+err.toString());
+           });
+       query = "UPDATE Poi SET TotalRank = (SELECT TotalRank FROM Poi Where Poiid " +
+           "= "+PoiReview.poiid+" )+ "+PoiReview.rank +" WHERE PoiID = " +PoiReview.poiid+
+           "UPDATE Poi SET NumberOfRanks = (SELECT NumberOfRanks FROM Poi Where PoiID = "+
+           PoiReview.poiid+")+1 Where PoiID = "+PoiReview.poiid;
+       DButilsAzure.execQuery(query)
+           .catch(function (err){
+               if(err)
+                   res.status(403).send("error while updating the rank in poi table "+err.toString());
+           });
+       res.status(200).send("DONE");
+    });
 });
 module.exports = router;
