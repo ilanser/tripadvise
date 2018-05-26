@@ -31,7 +31,7 @@ router.get('/poidetails/:id',function(req,res){
                 params = {
                     watchcount : ans.WatchCount +1,
                     poiID : ans.PoiID
-                }
+                };
                 DButilsAzure.execQuery(query,params);
             }
         })
@@ -74,7 +74,6 @@ router.get('/poidetails',function(req,res){
 });
 
 router.get('/searchpoi',function(req,res){
-   //TODO search function ( req.query['name']
     let poiname = req.query['name'].replace('_'," ");
     let ans = {};
     let query = "SELECT * FROM Poi Where Name = @poiName";

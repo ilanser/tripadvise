@@ -92,15 +92,15 @@ router.post('/register', function (req, res) {
             query = "INSERT INTO Interests VALUES ";
             interestlist.forEach(function (entry) {
                 query = query + "(@username ,'" + entry + "'),";
-            })
-            params = {
+            });
+            let params = {
               username : user.username
             };
             query = query.substr(0, query.length - 1);
             console.log(query);
             DButilsAzure.execQuery(query,params)
                 .then(function (results) {
-                    console.log("added interests into DB")
+                    console.log("added interests into DB");
                     res.json({
                         status: "success add user and interest to DB"
                     });
@@ -152,7 +152,7 @@ router.route('/favorites')
                   username : user.username,
                   favorites : user.favorites
                 };
-                console.log(query)
+                console.log(query);
                 DButilsAzure.execQuery(query,params)
                     .then(function (results) {
                         console.log(results + " " + results.length);
