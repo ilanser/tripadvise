@@ -10,11 +10,10 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/poidetails/:id',function(req,res){
-   //TODO return all the information for the poi ID
     let ans = {};
-    let askedID = req.params.id;
-    let query = "SELECT * FROM Poi Where PoiID = '"+askedID+"'";
-    DButilsAzure.execQuery(query)
+    let query = "SELECT * FROM Poi Where PoiID = @askedID";
+    let params = {askedID : req.params.id};
+    DButilsAzure.execQuery(query,params)
         .then( function (results) {
             if (results.length > 0 ){
                 ans = {
@@ -27,9 +26,13 @@ router.get('/poidetails/:id',function(req,res){
                     Category : results[0]['Category']
                 };
                 res.status(200).send(ans);
-                query = "UPDATE Poi SET WatchCount = "+(ans.WatchCount+1) +"Where" +
-                    " PoiID = "+ans.PoiID ;
-                DButilsAzure.execQuery(query);
+                query = "UPDATE Poi SET WatchCount = @watchcount Where" +
+                    " PoiID = @poiID" ;
+                params = {
+                    watchcount : ans.WatchCount +1,
+                    poiID : ans.PoiID
+                }
+                DButilsAzure.execQuery(query,params);
             }
         })
         .catch(function (err) {
@@ -39,7 +42,6 @@ router.get('/poidetails/:id',function(req,res){
 });
 
 router.get('/poidetails',function(req,res){
- //TODO return all the poi from DB
     //        [PoiID]
     //       ,[Name]
     //       ,[WatchCount]
@@ -49,7 +51,7 @@ router.get('/poidetails',function(req,res){
     //       ,[Category]
     let ans = [];
     let query = "SELECT * FROM Poi";
-    DButilsAzure.execQuery(query)
+    DButilsAzure.execQuery(query,{})
         .then(function (results){
             for( let i=0 ; i<results.length ; i++){
                 let poi = {
@@ -75,8 +77,9 @@ router.get('/searchpoi',function(req,res){
    //TODO search function ( req.query['name']
     let poiname = req.query['name'].replace('_'," ");
     let ans = {};
-    let query = "SELECT * FROM Poi Where Name = '"+poiname+"'";
-    DButilsAzure.execQuery(query)
+    let query = "SELECT * FROM Poi Where Name = @poiName";
+    let params = {poiName : poiname};
+    DButilsAzure.execQuery(query,params)
         .then ( function(results){
             if (results.length > 0 ){
                 ans = {
@@ -89,9 +92,13 @@ router.get('/searchpoi',function(req,res){
                     Category : results[0]['Category']
                 };
                 res.status(200).send(ans);
-                query = "UPDATE Poi SET WatchCount = "+(ans.WatchCount+1) +"Where" +
-                    " PoiID = "+ans.PoiID ;
-                DButilsAzure.execQuery(query);
+                query = "UPDATE Poi SET WatchCount = @wachcount Where" +
+                    " PoiID = @poiID" ;
+                params = {
+                  watchcount : ans.WatchCount+1,
+                  poiID : ans.PoiID
+                };
+                DButilsAzure.execQuery(query,params);
             }
             else
                 res.status(403).send("poi name was not found");
@@ -103,7 +110,6 @@ router.get('/searchpoi',function(req,res){
 });
 
 router.put('/review', function(req,res){
-   //TODO add review for poi to DB
     //        [ReviewID]
     //       ,[PoiID]
     //       ,[Username]
@@ -114,24 +120,27 @@ router.put('/review', function(req,res){
     jwt.verify(req.headers.token, 'secretkey' , (err,result)=>
     {
        PoiReview = {
-           poiid : "'"+req.body.poiid+"'",
-           username : "'"+result.user.username+"'",
-           review : "'"+req.body.review+"'",
-           date : "'"+req.body.date+"'",
-           rank : "'"+req.body.rank+"'"
+           poiid : req.body.poiid,
+           username : result.user.username,
+           review : req.body.review,
+           date : req.body.date,
+           rank : req.body.rank
        };
-       let query = "INSERT INTO Reviews VALUES ("+ Object.values(PoiReview).join()+
-           ")";
-       DButilsAzure.execQuery(query)
+       let query = "INSERT INTO Reviews VALUES (" +
+           "@poiid,@username,@review,@date,@rank)";
+       DButilsAzure.execQuery(query,PoiReview)
            .catch(function (err) {
               if (err)
                   res.status(403).send("error while adding review to DB: "+err.toString());
            });
        query = "UPDATE Poi SET TotalRank = (SELECT TotalRank FROM Poi Where Poiid " +
-           "= "+PoiReview.poiid+" )+ "+PoiReview.rank +" WHERE PoiID = " +PoiReview.poiid+
-           "UPDATE Poi SET NumberOfRanks = (SELECT NumberOfRanks FROM Poi Where PoiID = "+
-           PoiReview.poiid+")+1 Where PoiID = "+PoiReview.poiid;
-       DButilsAzure.execQuery(query)
+           "= @poiID )+ @rank WHERE PoiID = @poiID UPDATE Poi SET NumberOfRanks = (SELECT NumberOfRanks FROM Poi Where PoiID = @poiID)" +
+           "+1 Where PoiID = @poiID";
+       params = {
+           poiID : PoiReview.poiid,
+           rank : PoiReview.rank
+       };
+       DButilsAzure.execQuery(query,params)
            .catch(function (err){
                if(err)
                    res.status(403).send("error while updating the rank in poi table "+err.toString());

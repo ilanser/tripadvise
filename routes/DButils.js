@@ -28,7 +28,7 @@ console.log('pool connection on');
 
 
 //----------------------------------------------------------------------------------------------------------------------
-exports.execQuery = function (query) { //exports.execQuery = function (query,params)
+exports.execQuery = function (query,params) {
     return new Promise(function (resolve, reject) {
 
         try {
@@ -50,11 +50,11 @@ exports.execQuery = function (query) { //exports.execQuery = function (query,par
                         reject(err);
                     }
                 });
-                //if(params){
-                //    for (var key in params) {
-                //        dbReq.addParameter(key, TYPES.NVarChar, params[key]);
-                //    }
-               // }
+                if(params){
+                    for (var key in params) {
+                        dbReq.addParameter(key, TYPES.NVarChar, params[key]);
+                    }
+                }
                 dbReq.on('columnMetadata', function (columns) {
                     columns.forEach(function (column) {
                         if (column.colName != null)
