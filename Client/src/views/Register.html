@@ -1,10 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8">
+  <title>Register</title>
 </head>
 <body>
+<h1 >Register</h1>
+<div class="content">
+  <form ng-submit="addUser()">
+    <input type="text" ng-model="userName" placeholder="User Name" ng-change="unChange()" />
+    <label ng-model="UnComment" >{{UnComment}}</label>
+    <input type="password" ng-model="password" placeholder="Password" ng-change="pdChange()"/>
+    <label ng-model="pdComment" >{{pdComment}}</label>
+    <input type="text" placeholder="First Name" ng-model="firstName"/>
+    <input type="text" placeholder="Last Name" ng-model="lastName" />
+    <input type="text" placeholder="City" ng-model="city"/>
+    <h3>Choose Your Country:</h3>
+    <select ng-model="countrySelected" >
+      <option ng-repeat="c in countries " value="{{c.textContent}}">{{c.textContent}}</option>
+    </select>
 
+    <br/>
+    <br/>
+    <label>Choose Secret Question</label>
+    <input type="text" placeholder="Question" ng-model="question">
+    <label>Choose your secret answer</label>
+    <input type="text" placeholder="Answer" ng-model="answer"/>
+    <h3>Choose your favourite categories:</h3>
+    <br/>
+    <br/>
+    <div ng-repeat="category in categories">
+
+      <label >{{category.CategoryName}}
+      </label>
+      <!-- check and fix-->
+      <input type="checkbox" id="barshatz" ng-model="fdsf" ng-change="listChange(category)">
+
+    </div>
+
+    <input type="submit"  value="Register" />
+  </form>
+</div>
 </body>
 </html>

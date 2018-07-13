@@ -11,7 +11,7 @@ var poolConfig = {
 var connectionConfig = {
     userName: 'ilanser',
     password: '`1Passcode',
-    server: 'ilanser.database.windows.net',
+    server: 'ilancity.database.windows.net',
     options: { encrypt: true, database: 'cityranker' }
 };
 
@@ -70,7 +70,7 @@ exports.execQuery = function (query,params) {
                 });
 
                 dbReq.on('requestCompleted', function () {
-                    console.log('request Completed: ' + dbReq.rowCount + ' row(s) returned');
+                    console.log('request'+dbReq.body+' Completed: ' + dbReq.rowCount + ' row(s) returned');
                     console.log(ans);
                     connection.release();
                     resolve(ans);

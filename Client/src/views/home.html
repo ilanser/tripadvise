@@ -1,10 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<div >
 
-</body>
-</html>
+  <h1 class="headline">Top 5 favorites:</h1>
+  <br/>
+  <ul>
+
+    <div ng-repeat="poi in pois ">
+      <div  class="frame">
+        <!--<div id="imageDiv">-->
+        <img ng-src="{{poi.Image}}" style="float:left ;width:100px;" />
+        <!-- </div>-->
+        <h3>&nbsp;&nbsp;{{poi.Name}}</h3>
+        <ul class = "topFive">
+          <p><b>&nbsp;&nbsp;Number of views: </b>{{poi.views}}</p>
+          <p><b>&nbsp;&nbsp;Total rating: </b>{{poi.rate}}</p>
+        </ul>
+        <ul >
+          <p><b>&nbsp;&nbsp;Description: </b>{{poi.description}}</p>
+          <p><b>&nbsp;&nbsp;Last Reviews: </b>{{poi.review}}</p>
+
+          <button class="buttonF" ng-click="RemoveFromFavorites(poi);">Remove From favorites</button>
+
+        </ul>
+
+
+
+        <br>
+        <br>
+
+
+
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+      </div>
+      <br>
+    </div>
+
+  </ul>
+</div>
+
+
