@@ -9,6 +9,17 @@ router.get('/', function(req, res, next) {
     next();
 });
 
+router.get('/Categories' , function(req,res){
+    let query =  "SELECT * FROM Categories" ;
+    DButilsAzure.execQuery(query,null)
+        .then(function (results){
+            res.send(results);
+        })
+        .catch(function(err){
+            res.send("Error with Interests: "+err.toString());
+        })
+});
+
 router.get('/poidetails/:id',function(req,res){
     let ans = {};
     let query = "SELECT * FROM Poi Where PoiID = @askedID";
@@ -49,6 +60,7 @@ router.get('/poidetails',function(req,res){
     //       ,[TotalRank]
     //       ,[NumberOfRanks]
     //       ,[Category]
+    //       ,[img]
     let ans = [];
     let query = "SELECT * FROM Poi";
     DButilsAzure.execQuery(query,{})
@@ -61,7 +73,8 @@ router.get('/poidetails',function(req,res){
                     PoiDesc : results[i]['PoiDesc'],
                     TotalRank : results[i]['TotalRank'],
                     NumberOfRanks : results[i]['TotalRank'],
-                    Category : results[i]['Category']
+                    Category : results[i]['Category'],
+                    img : results[i]['img']
                 };
                 ans.push(poi);
             }

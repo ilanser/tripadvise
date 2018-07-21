@@ -1,10 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Points of interests</title>
-</head>
-<body>
+<div >
 
-</body>
-</html>
+  <h1 class="headline">Points of interests:</h1>
+  <br/>
+  <div class="sortBy">
+    <strong id="choseCategory">Choose Category:</strong>
+    <select ng-model="selected" ng-change="selectedHandler()" id="catOpt" ng-options="category.CategoryName for category in categories">
+    </select>
+  </div>
+  <ul>
+
+    <div ng-repeat="poi in filtered">
+
+      <div  class="frame">
+        <!--<div id="imageDiv">-->
+        <img ng-src="{{poi.img}}" style="float:left ;width:100px;" />
+        <!-- </div>-->
+        <h3>&nbsp;&nbsp;{{poi.Name}}</h3>
+        <ul class = "topFive">
+          <p><b>&nbsp;&nbsp;Watch count: </b>{{poi.WatchCount | number}}</p>
+          <p><b>&nbsp;&nbsp;Rank: </b>{{poi.TotalRank}}</p>
+        </ul>
+        <ul >
+          <p><b>&nbsp;&nbsp;Category: </b>{{poi.Category}}</p>
+
+          <button class="buttonF" ng-click="addToFavoritesHandler(poi);" ng-show="isLoggedIn">Add to Favorites</button>
+
+        </ul>
+
+
+
+        <br>
+        <br>
+
+        <p><b>Description: </b>{{poi.PoiDesc}}</p>
+
+
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <!--<div class="remove" ng-click="removeGame(game)">x</div>-->
+      </div>
+      <br>
+    </div>
+
+  </ul>
+  <div ng-show="isLoggedIn">
+    <h1 class="headline">Recommended Point of interest:</h1>
+    <br/>
+    <div ng-repeat="poi in recommendedPoi">
+
+      <div  class="frame">
+        <!--<div id="imageDiv">-->
+        <img ng-src="{{poi.img}}" style="float:left ;width:100px;" />
+        <!-- </div>-->
+        <h3>&nbsp;&nbsp;{{poi.Name}}</h3>
+        <ul class = "topFive">
+          <p><b>&nbsp;&nbsp;Rank: </b>{{poi.TotalRank | number}}</p>
+        </ul>
+        <ul >
+          <p><b>&nbsp;&nbsp;Category: </b>{{poi.Category}}</p>
+
+          <button class="buttonF" ng-click="addToFavoritesHandler(poi);">Add to Favorites</button>
+
+        </ul>
+
+
+
+        <br>
+        <br>
+
+        <p><b>Description: </b>{{poi.PoiDesc}}</p>
+
+
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <!--<div class="remove" ng-click="removeGame(game)">x</div>-->
+      </div>
+      <br>
+    </div>
+
+  </div>
+
+</div>
+
+

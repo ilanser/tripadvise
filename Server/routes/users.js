@@ -14,6 +14,8 @@ router.post('/login', function (req, res) {
     console.log(req.body);
     let user = {};
     let other = {};
+
+    //Login Without Token
     let query = "SELECT * FROM Users WHERE username = @username";
     let params = {
       username : req.body['username']
@@ -101,12 +103,13 @@ router.post('/register', function (req, res) {
             DButilsAzure.execQuery(query,params)
                 .then(function (results) {
                     console.log("added interests into DB");
-                    res.json({
+                    res.status(200).json({
                         status: "success add user and interest to DB"
                     });
+
                 })
                 .catch(function (err) {
-                    res.status(403).send({error: err.toString()});
+                    res.status(200).send({error: err.toString()}); //workaround
                 });
         })
         .catch(function (err) {
@@ -173,6 +176,25 @@ router.route('/favorites')
 
     });
 
+router.route('/SuggestedPOI')
+    .post(function(req,res){
+   let query = "SELECT Poi.* " +
+       "FROM Interests " +
+       "INNER JOIN Poi ON Interests.Interest=Poi.Category WHERE Username=@username";
+   let params = {
+       username : req.body.username
+   };
+   DButilsAzure.execQuery(query,params)
+       .then(function (results){
+           console.log(results);
+            res.status(200).send(results);
+       })
+       .catch(function(err){
+           console.log("Error Fetching Favorites: "+err);
+           res.status(403).send("Error Fetching Favorites: "+err);
+       })
+});
+
 router.post('/retrievePassword', function (req, res) {
     let query = "SELECT secretquestion, secretanswer, password FROM " +
         "users where username = @username";
@@ -181,14 +203,19 @@ router.post('/retrievePassword', function (req, res) {
     };
     DButilsAzure.execQuery(query,params)
         .then(function (results) {
+            console.log(req.body.secretquestion+" ,"+req.body.secretanswer)
+            if(req.body.secretquestion==results[0]['secretquestion']&&req.body.secretanswer==results[0]['secretanswer'])
             res.json({
-                secretquestion: results[0]['secretquestion'],
-                secretanswer: results[0]['secretanswer'],
                 password: results[0]['password']
             });
+            else
+                res.json({password: "wrong question/answer"});
         })
         .catch(function (err) {
             res.status(403).send({error: err.toString()});
         })
 });
+
+
+
 module.exports = router;

@@ -139,7 +139,7 @@ main{
 .topFive{
   float: left;
 }
-.buttonC{
+.buttonF{
   float: right;
 }
 .wrapper {
@@ -170,12 +170,12 @@ width: 150px;
 #totalPrice{
   font-weight: bold;
 }
-#cart{
+#fav{
   width: 35px;
   height: 30px;
   padding-top: -30px;
 }
-#cartC{
+#favorites{
 top: -20px;
 }
 
@@ -185,6 +185,6 @@ top: -20px;
   text-emphasis-color: black;
 }
 #logo{
-  width: 35px;
+  width: 70px;
   height: 30px;
 }

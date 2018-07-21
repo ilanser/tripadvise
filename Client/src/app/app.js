@@ -1,4 +1,4 @@
-var myTrip = angular.module('myTrip',['ngRoute']);
+var myTrip = angular.module('myTrip',['ngRoute','checklist-model']);
 //routing
 myTrip.config(['$routeProvider',function($routeProvider){
   $routeProvider
@@ -39,24 +39,25 @@ myTrip.config(['$routeProvider',function($routeProvider){
     });
 }]);
 
-var Favorites ={};
+var Favorites ='';
 var m_currentUserName='Guest';
 var isLoggedIn=false;
+var Token='';
 
 myTrip.config(['$locationProvider', function($locationProvider) {
   $locationProvider.hashPrefix('');
 }]);
 
 
-myTrip.factory('myService',['$http',function($http){
-  var service={};
-  service.currentUser='';
-  service.isLoggedIn=false;
-  service.favorites='';
-  service.token='';
-  service.firstname='';
-  return service;
-}])
+// myTrip.factory('myService',['$http',function($http){
+//   var service={};
+//   service.currentUser='';
+//   service.isLoggedIn=false;
+//   service.favorites='';
+//   service.token='';
+//   service.firstname='';
+//   return service;
+// }])
 
 
 
@@ -78,7 +79,11 @@ myTrip.controller('LoginController', ['$http','$scope','$location','$window',fun
             $window.m_currentUserName=$scope.userName;
             $window.token = response.token;
             $window.firstname= response.firstname;
+            Token=response.token;
+            this.Favorites=response.favorites.trim();
+
             $location.path('/homeAfterLogin'); //name of the site after login
+             console.log(Favorites);
           }
           else if(response.data=='invalid username or password'){ //check the message for invalid username and pass
             window.alert('wrong credentials');
@@ -92,7 +97,10 @@ myTrip.controller('LoginController', ['$http','$scope','$location','$window',fun
             $window.m_currentUserName=$scope.userName;
             $location.path('/homeAfterLogin');
           }
-        });
+        })
+        .catch(function(err){
+          console.log("error while logging in: "+err);
+        })
     }
   }
   $scope.unChange=function(){
@@ -148,75 +156,20 @@ myTrip.controller('WelcomeController', ['$http','$scope','$window',function ($ht
   $scope.token=$window.token;
 
 
-//handle cookies
-//   $http.post('http://localhost:5011/Users/SendCookie', data)
-//     .then(function (response) {
-//       if(response.data!='wrong cookie'){
-//         document.getElementById('login').style.display='none';
-//         document.getElementById('Register').style.display='none';
-//         document.getElementById('cartC').style.display='block';
-//         $window.isLoggedIn=true;
-//         $window.m_currentUserName=response.data[0].UserName;
-//         $scope.isLoggedIn=$window.isLoggedIn;
-//         $scope.m_currentUserName=$window.m_currentUserName;
-//         $scope.m_currentDate=localStorageService.cookie.get('currentDate');
-//
-//         $http.get("http://localhost:5011/Users/Top5TrendMovies")
-//           .then(function (response) {
-//             $scope.movies=response.data;
-//
-//
-//           })
-//           .catch(function (err) {
-//             window.alert(err);
-//           })
-//         $scope.addToCartHandler =function (movie) {
-//           cart[movie.Name] = movie;
-//           window.alert("The movie " + movie.Name + " was added to cart");
-//         }
-//
-//         //movies from last month:
-//         $scope.lastMonthMovies =[];
-//         $http.get("http://localhost:5011/Users/TopNewestMovies")
-//           .then(function (response) {
-//             $scope.lastMonthMovies=response.data;
-//
-//
-//           })
-//           .catch(function (err) {
-//             window.alert(err);
-//           })
-//       }else{
-//         $scope.m_currentUserName=$window.m_currentUserName;
-//         $http.get("http://localhost:5011/Users/Top5TrendMovies")
-//           .then(function (response) {
-//             $scope.movies=response.data;
-//
-//
-//           })
-//           .catch(function (err) {
-//             window.alert(err);
-//           })
-//         $scope.addToCartHandler =function (movie) {
-//           cart[movie.Name] = movie;
-//           window.alert("The movie " + movie.Name + " was added to cart");
-//         }
-//       }
-//    });
 
 
 
 }]);
 
 
-myTrip.controller('RegisterController', ['$http','$scope','$location','localStorageService',function ($http,$scope,$location,localStorageService) {
+myTrip.controller('RegisterController', ['$http','$scope','$location',function ($http,$scope,$location) {
 
   $scope.checked = {};
 
-  $http.get('http://localhost:5011/Users/Intrests') // Implement interests get function in API
+  $http.get('http://localhost:5011/POI/Categories')
     .then(function (response) {
-      $scope.categories = response.data;
-
+      $scope.Categories = response.data;
+      console.log($scope.Categories);
 
     });
 
@@ -231,27 +184,21 @@ myTrip.controller('RegisterController', ['$http','$scope','$location','localStor
   $scope.addUser = function () {
     if ($scope.isValid()) {
       var categories = [];
-      var data = {
+      var user = {
         username: $scope.userName,
-        Password: $scope.password,
-        Question: $scope.question,
-        Answer: $scope.answer,
+        password: $scope.password,
+        secretquestion: $scope.question,
+        secretanswer: $scope.answer,
         firstname: $scope.firstName,
         lastname: $scope.lastName,
-        address: $scope.adress,
-        Country: $scope.countrySelected,
-        city: $scope.city
-
+        email: $scope.email,
+        country: $scope.countrySelected,
+        city: $scope.city,
+        interests: []
       };
 
-      for (var key in $scope.checked) {
-        if ($scope.checked[key] == true) {
-          categories.push(key);
-        }
-      }
-      data['Categories']=categories;
 
-      $http.post('http://localhost:5011/Users/Register', data)
+      $http.post('http://localhost:5011/Users/Register', user)
         .then(function (response) {
           if(response.status===403){
 
@@ -303,8 +250,8 @@ myTrip.controller('RegisterController', ['$http','$scope','$location','localStor
     b=b&&bbool;
 
     var i=0;
-    if($scope.userName&&$scope.password&&$scope.firstName&&$scope.lastName&&$scope.adress&&$scope.city&&$scope.question&&$scope.answer&&$scope.countrySelected){
-      if(a&&b&&$scope.userName.length>0&&$scope.password.length>0&&$scope.firstName.length>0&&$scope.lastName.length>0&&$scope.adress.length>0&&$scope.city.length>0
+    if($scope.userName&&$scope.password&&$scope.firstName&&$scope.lastName&&$scope.city&&$scope.question&&$scope.answer&&$scope.countrySelected){
+      if(a&&b&&$scope.userName.length>0&&$scope.password.length>0&&$scope.firstName.length>0&&$scope.lastName.length>0&&$scope.city.length>0
         &&$scope.question.length>0&&$scope.answer.length>0&&$scope.countrySelected.length>0){
         return true;
       }else{
@@ -327,5 +274,154 @@ myTrip.controller('RegisterController', ['$http','$scope','$location','localStor
 
   }
 
+}]);
+
+myTrip.controller('POIController',['$window','$scope','$http',function($window,$scope,$http){
+  // top 5 POI:
+  $scope.poi=[];
+  $scope.allPoi=[];
+  $scope.recommendedPoi = [];
+  $scope.isLoggedIn=isLoggedIn;
+  var data = {
+    username:m_currentUserName
+  }
+  if(m_currentUserName!='Guest'){
+    $http.post("http://localhost:5011/Users/SuggestedPOI",data) //create function in server
+
+      .then(function (response) {
+        $scope.recommendedPoi=response.data;
+
+      })
+      .catch(function (err) {
+        window.alert(err);
+      })
+
+  }
+  $http.get("http://localhost:5011/POI/poidetails")
+    .then(function (response) {
+      $scope.poi=response.data;
+      $scope.allPoi = $scope.poi;
+
+    })
+    .catch(function (err) {
+      window.alert(err);
+    })
+
+  $http.get("http://localhost:5011/POI/Categories")
+    .then(function (response) {
+      $scope.categories=response.data;
+    })
+    .catch(function (err) {
+      window.alert(err);
+    })
+  $scope.selectedHandler = function () {
+
+    $scope.filtered=[];
+    $scope.poi=$scope.allPoi;
+    for(var i = 0; i < $scope.poi.length ; i++){
+      if($scope.poi[i].Category === $scope.selected.CategoryName){
+        $scope.filtered.push($scope.poi[i])
+      }
+    }
+    $scope.poi = $scope.poi;
+  }
+
+
+  $scope.addToFavoritesHandler =function (poi) {
+    let index = this.Favorites.indexOf(poi.PoiID);
+    if(index>-1)
+      Favorites.replace(poi.PoiID+" ","");
+    else{
+      Favorites = favorites + " "+poi.PoiID;
+      window.alert("The point " + poi.Name + " was added to favorites");
+    }
+    $http.put("http://localhost:5011/Users/Favorites",{headers: {'token': Token}, body:{'favorites':Favorites}})
+      .then(function(response){
+        console.log("favorites update: "+response.data);
+      })
+      .catch(function(err){
+        console.log("error updating favorites: "+err);
+      })
+
+  }
+
+
+
+}]);
+
+myTrip.controller('FavoritesController',['$scope','$http',function($score,$http){
+  $scope.Favorites={};
+  $scope.allPoi={};
+  let favID='';
+  let splitFavID={};
+  $http.get('http://localhost:5011/POI/poidetails')
+    .then(function(response){
+      $scope.allPoi=response.data;
+    })
+    .catch(function(err){
+      console.log("Error while fetching all poi data: "+err);
+    })
+  $http.get('http://localhost:5011/Users/Favorites',{headers: {'token':Token}})
+    .then(function(response){
+      favID=response.favorites;
+      console.log(favorites);
+      splitFavID=favID.trim().split(' ');
+      for(poi in $scope.allPoi){
+        if(splitFavID.contains(poi.poiID))
+        $scope.Favorites.push(poi);
+      }
+    })
+    .catch(function(err){
+      console.log("error while fetching favorites: "+err);
+    })
+
+  $scope.addToFavoritesHandler =function (poi) {
+    let index = Favorites.indexOf(poi.PoiID);
+    if(index>-1)
+      Favorites.replace(poi.PoiID+" ","");
+
+    $http.put("http://localhost:5011/Users/Favorites",{headers: {'token': Token}, body:{'favorites':Favorites}})
+      .then(function(response){
+        console.log("favorites update: "+response.data);
+      })
+      .catch(function(err){
+        console.log("error updating favorites: "+err);
+      });
+    $http.get('http://localhost:5011/Users/Favorites',{headers: {'token':Token}})
+      .then(function(response){
+        favID=response.favorites;
+        console.log(favorites);
+        splitFavID=favID.trim().split(' ');
+        for(poi in $scope.allPoi){
+          if(splitFavID.contains(poi.poiID))
+            $scope.Favorites.push(poi);
+        }
+      })
+      .catch(function(err){
+        console.log("error while fetching favorites: "+err);
+      });
+
+  }
+}]);
+
+myTrip.controller('PassController',['$scope','$http',function($scope,$http){
+
+  $scope.isShow=false;
+  $scope.retrievePass=function() {
+    var data={username:$scope.userName,secretquestion:$scope.question,secretanswer:$scope.answer};
+    $http.post('http://localhost:5011/Users/RetrievePassword', data)
+      .then(function (response) {
+        console.log(response.data);
+        console.log(response.data.password);
+        if(response.data.password!="wrong question/answer"){
+          $scope.Pass=response.data.password;
+          $scope.isShow=true;
+
+        }else{
+          window.alert('wrong credentials')
+        }
+
+      });
+  }
 
 }]);

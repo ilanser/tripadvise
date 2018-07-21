@@ -14,6 +14,7 @@
     <label ng-model="pdComment" >{{pdComment}}</label>
     <input type="text" placeholder="First Name" ng-model="firstName"/>
     <input type="text" placeholder="Last Name" ng-model="lastName" />
+    <input type="text" placeholder="Email" ng-model="email"/>
     <input type="text" placeholder="City" ng-model="city"/>
     <h3>Choose Your Country:</h3>
     <select ng-model="countrySelected" >
@@ -26,17 +27,12 @@
     <input type="text" placeholder="Question" ng-model="question">
     <label>Choose your secret answer</label>
     <input type="text" placeholder="Answer" ng-model="answer"/>
-    <h3>Choose your favourite categories:</h3>
+    <h3>Choose your Intresets:</h3>
     <br/>
     <br/>
-    <div ng-repeat="category in categories">
-
-      <label >{{category.CategoryName}}
-      </label>
-      <!-- check and fix-->
-      <input type="checkbox" id="barshatz" ng-model="fdsf" ng-change="listChange(category)">
-
-    </div>
+    <label ng-repeat = "category in Categories">
+      <input type = "checkbox" checklist-model = "user.interests" checklist-value ="category">{{interest}}
+    </label>
 
     <input type="submit"  value="Register" />
   </form>
