@@ -1,32 +1,25 @@
-<div >
+<div>
 
   <h1 class="headline">Suggested Point Of Interests</h1>
   <br/>
   <ul>
 
-    <div ng-repeat="poi in Favorites ">
-      <div  class="frame">
-        <!--<div id="imageDiv">-->
-        <img ng-src="{{poi.Image}}" style="float:left ;width:100px;" />
-        <!-- </div>-->
+    <div ng-repeat="poi in recommendedPoi ">
+      <div class="frame">
+        <img ng-src="{{poi.img}}" style="float:left ;width:100px;"/>
         <h3>&nbsp;&nbsp;{{poi.Name}}</h3>
-        <ul class = "topFive">
-          <p><b>&nbsp;&nbsp;Number of views: </b>{{poi.views}}</p>
-          <p><b>&nbsp;&nbsp;Total rating: </b>{{poi.rate}}</p>
-        </ul>
-        <ul >
-          <p><b>&nbsp;&nbsp;Description: </b>{{poi.description}}</p>
-          <p><b>&nbsp;&nbsp;Last Reviews: </b>{{poi.review}}</p>
+        <p><b>Category: </b>{{poi.Category}}</p>
 
-          <button class="buttonF" ng-click="RemoveFromFavorites(poi);">Remove From favorites</button>
+        <ul>
+          <p><b>&nbsp;&nbsp;Description: </b>{{poi.PoiDesc}}</p>
+
+          <button class="buttonF" ng-show="isLoggedIn" ng-click="addToFavoritesHandler(poi);">Add to favorites</button>
 
         </ul>
 
 
-
         <br>
         <br>
-
 
 
         <br>
@@ -36,7 +29,33 @@
         <br>
         <br>
       </div>
+
       <br>
+    </div>
+    <h1 class="headline" ng-show="isLoggedIn">Favorites</h1>
+
+
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+
+    <div ng-show="isLoggedIn" ng-repeat="poi in local_favorites">
+      <div class="frame">
+        <img ng-src="{{poi.img}}" style="float:left ;width:100px;"/>
+        <h3>&nbsp;&nbsp;{{poi.Name}}</h3>
+        <ul>
+          <p><b>&nbsp;&nbsp;Description: </b>{{poi.PoiDesc}}</p>
+
+          <button class="buttonF" ng-click="addToFavoritesHandler(poi);">Remove From favorites</button>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
+        </ul>
+
+      </div>
+
     </div>
 
   </ul>

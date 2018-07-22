@@ -31,9 +31,8 @@
     <br/>
     <br/>
     <label ng-repeat = "category in Categories">
-      <input type = "checkbox" checklist-model = "user.interests" checklist-value ="category">{{interest}}
+      <input type = "checkbox" checklist-model = "interestselected" checklist-value="category.CategoryName">{{category.CategoryName}}
     </label>
-
     <input type="submit"  value="Register" />
   </form>
 </div>

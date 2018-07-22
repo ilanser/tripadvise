@@ -71,7 +71,6 @@ exports.execQuery = function (query,params) {
 
                 dbReq.on('requestCompleted', function () {
                     console.log('request'+dbReq.body+' Completed: ' + dbReq.rowCount + ' row(s) returned');
-                    console.log(ans);
                     connection.release();
                     resolve(ans);
 

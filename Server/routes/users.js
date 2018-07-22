@@ -89,7 +89,7 @@ router.post('/register', function (req, res) {
     DButilsAzure.execQuery(query,user)
         .then(function (results) {
             console.log("username added to the DB");
-            let interestlist = req.body.interests.split(',');
+            let interestlist = req.body.interests;
             console.log(interestlist);
             query = "INSERT INTO Interests VALUES ";
             interestlist.forEach(function (entry) {
@@ -119,7 +119,7 @@ router.post('/register', function (req, res) {
 
 });
 /*Handle favorites manipulation  */
-router.route('/favorites')
+router.route('/Favorites')
     .get(function (req, res) {
         let user = {};
         jwt.verify(req.headers.token, 'secretkey', (err, result) => {
@@ -142,12 +142,15 @@ router.route('/favorites')
         });
     })
     .put(function (req, res) {
-        let user = {};
+        let user = {
+            "favorites": req.body.favorites
+        };
+        console.log(user);
+        console.log(req.body);
         jwt.verify(req.headers.token, 'secretkey', (err, result) => {
             console.log(result);
             if (!err) {
                 user.username = result.user.username;
-                user.favorites = req.body.favorites;
                 let query = "IF EXISTS (SELECT * FROM Favorites WHERE username = @username) " +
                     "BEGIN Update Favorites SET poiid = @favorites " +
                     "WHERE username = @username END ELSE BEGIN INSERT INTO Favorites VALUES (@username, @favorites) END";
@@ -155,7 +158,6 @@ router.route('/favorites')
                   username : user.username,
                   favorites : user.favorites
                 };
-                console.log(query);
                 DButilsAzure.execQuery(query,params)
                     .then(function (results) {
                         console.log(results + " " + results.length);
@@ -186,12 +188,11 @@ router.route('/SuggestedPOI')
    };
    DButilsAzure.execQuery(query,params)
        .then(function (results){
-           console.log(results);
             res.status(200).send(results);
        })
        .catch(function(err){
-           console.log("Error Fetching Favorites: "+err);
-           res.status(403).send("Error Fetching Favorites: "+err);
+           console.log("Error Fetching SuggestedPOI: "+err);
+           res.status(403).send("Error Fetching SuggestedPOI: "+err);
        })
 });
 

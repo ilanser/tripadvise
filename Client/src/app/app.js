@@ -39,7 +39,7 @@ myTrip.config(['$routeProvider',function($routeProvider){
     });
 }]);
 
-var Favorites ='';
+var Favorites =[];
 var m_currentUserName='Guest';
 var isLoggedIn=false;
 var Token='';
@@ -70,7 +70,9 @@ myTrip.controller('LoginController', ['$http','$scope','$location','$window',fun
 
       $http.post('http://localhost:5011/Users/Login', data)
         .then(function (response) {
-          if(response.data=="login without token"){ //change according to server response
+          if(response.data=='invalid username or password'){ //check the message for invalid username and pass
+            window.alert('wrong credentials');
+          }else{
             document.getElementById('login').style.display='none';
             document.getElementById('Register').style.display='none';
             document.getElementById('Favorites').style.display='inline-block';
@@ -79,23 +81,9 @@ myTrip.controller('LoginController', ['$http','$scope','$location','$window',fun
             $window.m_currentUserName=$scope.userName;
             $window.token = response.token;
             $window.firstname= response.firstname;
-            Token=response.token;
-            this.Favorites=response.favorites.trim();
-
-            $location.path('/homeAfterLogin'); //name of the site after login
-             console.log(Favorites);
-          }
-          else if(response.data=='invalid username or password'){ //check the message for invalid username and pass
-            window.alert('wrong credentials');
-          }else{
-            var d=Date().toString();
-            document.getElementById('login').style.display='none';
-            document.getElementById('Register').style.display='none';
-            document.getElementById('Favorites').style.display='inline-block';
-
-            $window.isLoggedIn=true;
-            $window.m_currentUserName=$scope.userName;
-            $location.path('/homeAfterLogin');
+            Token=response.data.token;
+            this.Favorites=response.data.favorites.trim();
+            $location.path('/Home');
           }
         })
         .catch(function(err){
@@ -151,21 +139,112 @@ myTrip.controller('LoginController', ['$http','$scope','$location','$window',fun
 }]);
 myTrip.controller('WelcomeController', ['$http','$scope','$window',function ($http,$scope,$window) {
 //Implement token check
-  $scope.favorites=[];
-  $scope.m_currentUserName = $window.m_currentUserName;
-  $scope.token=$window.token;
+  $scope.poi=[];
+  $scope.allPoi=[];
+  $scope.recommendedPoi = [];
+  $scope.local_favorites = Favorites;
+  $scope.isLoggedIn=isLoggedIn;
+  var data = {
+    username:m_currentUserName
+  }
+
+  if(m_currentUserName.length>0 && m_currentUserName!='Guest'){
+    $http.post("http://localhost:5011/Users/SuggestedPOI",data) //create function in server
+
+      .then(function (response) {
+        $scope.recommendedPoi=response.data;
+
+      })
+      .catch(function (err) {
+        window.alert(err);
+      })
+    $http.get("http://localhost:5011/Users/Favorites",{headers: {"token":Token}})
+      .then(function(results){
+        $scope.local_favorites = $scope.allPoi.filter(poi => results.data.favorites.indexOf(poi.PoiID)>-1);
+        Favorites=$scope.local_favorites;
+      })
+      .catch(function(err){
+        console.log("error fetching favorites: "+err);
+      })
+  }
+  else{
+    $http.get("http://localhost:5011/POI/poidetails")
+      .then(function (response) {
+        $scope.poi=response.data;
+        $scope.allPoi = $scope.poi;
+        let random = Math.floor(Math.random()*($scope.allPoi.length)+1);
+        $scope.recommendedPoi.push($scope.allPoi[random]);
+        random = Math.floor(Math.random()*($scope.allPoi.length)+1);
+        $scope.recommendedPoi.push($scope.allPoi[random]);
+        random = Math.floor(Math.random()*($scope.allPoi.length)+1);
+        $scope.recommendedPoi.push($scope.allPoi[random]);
+        console.log($scope.recommendedPoi);
+      })
+      .catch(function (err) {
+        window.alert(err);
+      })
 
 
 
+  }
+  $http.get("http://localhost:5011/POI/poidetails")
+    .then(function (response) {
+      $scope.poi=response.data;
+      $scope.allPoi = $scope.poi;
+    })
+    .catch(function (err) {
+      window.alert(err);
+    })
+
+  $http.get("http://localhost:5011/POI/Categories")
+    .then(function (response) {
+      $scope.categories=response.data;
+    })
+    .catch(function (err) {
+      window.alert(err);
+    })
+  $scope.selectedHandler = function () {
+
+    $scope.filtered = [];
+    $scope.poi = $scope.allPoi;
+    for (var i = 0; i < $scope.poi.length; i++) {
+      if ($scope.poi[i].Category === $scope.selected.CategoryName) {
+        $scope.filtered.push($scope.poi[i])
+      }
+    }
+    $scope.poi = $scope.poi;
+  }
+  $scope.addToFavoritesHandler =function (poi) {
+    let index = Favorites.indexOf(poi);
+    if(index>-1)
+      Favorites.splice(index,1);
+    else
+      Favorites.push(poi);
+    let newfav = "";
+    for(let i=0;i<Favorites.length;i++)
+      newfav = newfav+Favorites[i].PoiID+" ";
+    newfav= '"'+newfav.trim()+'"';
+    console.log(Favorites);
+    console.log(newfav);
+    $http.put("http://localhost:5011/Users/Favorites",{'favorites':newfav},{headers: {'token': Token }})
+      .then(function(response){
+        console.log("favorites update: "+response);
+      })
+      .catch(function(err){
+        console.log("error updating favorites: "+err);
+      });
+
+
+  }
 
 
 }]);
 
-
+// Register controller fix the interests section
 myTrip.controller('RegisterController', ['$http','$scope','$location',function ($http,$scope,$location) {
 
   $scope.checked = {};
-
+  $scope.interestselected=[];
   $http.get('http://localhost:5011/POI/Categories')
     .then(function (response) {
       $scope.Categories = response.data;
@@ -183,6 +262,7 @@ myTrip.controller('RegisterController', ['$http','$scope','$location',function (
 
   $scope.addUser = function () {
     if ($scope.isValid()) {
+      console.log($scope.interestselected);
       var categories = [];
       var user = {
         username: $scope.userName,
@@ -194,7 +274,7 @@ myTrip.controller('RegisterController', ['$http','$scope','$location',function (
         email: $scope.email,
         country: $scope.countrySelected,
         city: $scope.city,
-        interests: []
+        interests: $scope.interestselected
       };
 
 
@@ -275,7 +355,7 @@ myTrip.controller('RegisterController', ['$http','$scope','$location',function (
   }
 
 }]);
-
+// Fix the add to favorites function
 myTrip.controller('POIController',['$window','$scope','$http',function($window,$scope,$http){
   // top 5 POI:
   $scope.poi=[];
@@ -326,34 +406,37 @@ myTrip.controller('POIController',['$window','$scope','$http',function($window,$
     $scope.poi = $scope.poi;
   }
 
-
+  $scope.Favorites=Favorites;
   $scope.addToFavoritesHandler =function (poi) {
-    let index = this.Favorites.indexOf(poi.PoiID);
+    let index = Favorites.indexOf(poi);
     if(index>-1)
-      Favorites.replace(poi.PoiID+" ","");
-    else{
-      Favorites = favorites + " "+poi.PoiID;
-      window.alert("The point " + poi.Name + " was added to favorites");
-    }
-    $http.put("http://localhost:5011/Users/Favorites",{headers: {'token': Token}, body:{'favorites':Favorites}})
+      Favorites.splice(index,1);
+    else
+      Favorites.push(poi);
+    let newfav = "";
+    for(let i=0;i<Favorites.length;i++)
+      newfav = newfav+Favorites[i].PoiID+" ";
+    newfav= '"'+newfav.trim()+'"';
+    console.log(Favorites);
+    console.log(newfav);
+    $http.put("http://localhost:5011/Users/Favorites",{'favorites':newfav},{headers: {'token': Token }})
       .then(function(response){
-        console.log("favorites update: "+response.data);
+        console.log("favorites update: "+response);
       })
       .catch(function(err){
         console.log("error updating favorites: "+err);
-      })
+      });
+
 
   }
 
 
 
 }]);
-
-myTrip.controller('FavoritesController',['$scope','$http',function($score,$http){
-  $scope.Favorites={};
+//Fix the remove from favorites function
+myTrip.controller('FavoritesController',['$scope','$http',function($scope,$http){
   $scope.allPoi={};
-  let favID='';
-  let splitFavID={};
+  $scope.Favorites=Favorites;
   $http.get('http://localhost:5011/POI/poidetails')
     .then(function(response){
       $scope.allPoi=response.data;
@@ -361,45 +444,25 @@ myTrip.controller('FavoritesController',['$scope','$http',function($score,$http)
     .catch(function(err){
       console.log("Error while fetching all poi data: "+err);
     })
-  $http.get('http://localhost:5011/Users/Favorites',{headers: {'token':Token}})
-    .then(function(response){
-      favID=response.favorites;
-      console.log(favorites);
-      splitFavID=favID.trim().split(' ');
-      for(poi in $scope.allPoi){
-        if(splitFavID.contains(poi.poiID))
-        $scope.Favorites.push(poi);
-      }
-    })
-    .catch(function(err){
-      console.log("error while fetching favorites: "+err);
-    })
 
   $scope.addToFavoritesHandler =function (poi) {
-    let index = Favorites.indexOf(poi.PoiID);
+    let index = Favorites.indexOf(poi);
     if(index>-1)
-      Favorites.replace(poi.PoiID+" ","");
-
-    $http.put("http://localhost:5011/Users/Favorites",{headers: {'token': Token}, body:{'favorites':Favorites}})
+      Favorites.splice(index,1);
+    let newfav = "";
+    for(let i=0;i<Favorites.length;i++)
+      newfav = newfav+Favorites[i].PoiID+" ";
+    newfav= '"'+newfav.trim()+'"';
+    console.log(Favorites);
+    console.log(newfav);
+    $http.put("http://localhost:5011/Users/Favorites",{'favorites':newfav},{headers: {'token': Token }})
       .then(function(response){
-        console.log("favorites update: "+response.data);
+        console.log("favorites update: "+response);
       })
       .catch(function(err){
         console.log("error updating favorites: "+err);
       });
-    $http.get('http://localhost:5011/Users/Favorites',{headers: {'token':Token}})
-      .then(function(response){
-        favID=response.favorites;
-        console.log(favorites);
-        splitFavID=favID.trim().split(' ');
-        for(poi in $scope.allPoi){
-          if(splitFavID.contains(poi.poiID))
-            $scope.Favorites.push(poi);
-        }
-      })
-      .catch(function(err){
-        console.log("error while fetching favorites: "+err);
-      });
+
 
   }
 }]);
